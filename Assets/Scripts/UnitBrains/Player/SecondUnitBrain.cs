@@ -16,9 +16,15 @@ namespace UnitBrains.Player
         private bool _overheated;
         private List<Vector2Int> DangerTargetsOutOfRange = new List<Vector2Int>();
 
-        private static int numberCounter = 0;
-        private int unitNumber;
+        // HomeWork Seven
+        private static int _unitIdCounter = 0;
+        public int UnitId { get; private set; }
         private const int MaxTargets = 3;
+
+        public SecondUnitBrain()
+        {
+            UnitId = _unitIdCounter++;
+        }
 
         protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList)
         {
@@ -69,26 +75,18 @@ namespace UnitBrains.Player
         {
             List<Vector2Int> result = new List<Vector2Int>();
 
-            float minDistance = float.MaxValue;
-            Vector2Int closestTarget = Vector2Int.zero;
-
-            foreach (Vector2Int target in GetAllTargets())
-            {
-                if (DistanceToOwnBase(target) < minDistance)
-                {
-                    minDistance = DistanceToOwnBase(target);
-                    closestTarget = target;
-                }
-            }
-
             DangerTargetsOutOfRange.Clear();
+            DangerTargetsOutOfRange.AddRange(GetAllTargets());
 
-            if (minDistance != float.MaxValue)
+            if (DangerTargetsOutOfRange.Count > 0)
             {
-                DangerTargetsOutOfRange.Add(closestTarget);
-                if (IsTargetInRange(closestTarget))
+                SortByDistanceToOwnBase(DangerTargetsOutOfRange);
+
+                Vector2Int targetForAttack = GetTargetForAttackById();
+
+                if (IsTargetInRange(targetForAttack))
                 {
-                    result.Add(closestTarget);
+                    result.Add(targetForAttack);
                 }
             }
             else
@@ -126,6 +124,20 @@ namespace UnitBrains.Player
         {
             _temperature += 1f;
             if (_temperature >= OverheatTemperature) _overheated = true;
+        }
+
+        private Vector2Int GetTargetForAttackById()
+        {
+            int targetIndex = UnitId % MaxTargets;
+
+            if (targetIndex > (DangerTargetsOutOfRange.Count - 1) || targetIndex == 0)
+            {
+                return DangerTargetsOutOfRange[0];
+            }
+            else
+            {
+                return DangerTargetsOutOfRange[targetIndex - 1];
+            }
         }
     }
 }
